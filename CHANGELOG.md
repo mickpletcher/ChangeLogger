@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.0] - 2026-04-10
+_Branch: main_
+
+### Added
+- Added VS Code workspace configuration file to the repository
+
 ## [0.1.0] - 2026-04-10
 _Branch: main_
 
