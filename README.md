@@ -1,5 +1,7 @@
 # GitHub Copilot Changelog Automation
 
+[![Use this template](https://img.shields.io/badge/Use%20this%20template-2ea44f?style=for-the-badge&logo=github)](https://github.com/mickpletcher/ChangeLogger/generate)
+
 A reusable GitHub Copilot instruction template that automates changelog updates and git commits across any repository. Type a single phrase in Copilot Chat and it handles everything automatically.
 
 ---
