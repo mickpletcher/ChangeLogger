@@ -2,12 +2,12 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Generate Changelog & Commit Message",
+            "label": "Generate Commit Prompt",
             "type": "shell",
-            "command": "powershell",
+            "command": "pwsh",
             "args": [
                 "-ExecutionPolicy", "Bypass",
-                "-File", "${workspaceFolder}/scripts/New-ChangelogPrompt.ps1"
+                "-File", "${workspaceFolder}/scripts/generate-changelog-prompt.ps1"
             ],
             "presentation": {
                 "reveal": "always",
