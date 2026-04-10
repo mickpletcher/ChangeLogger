@@ -1,1 +1,26 @@
-
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Generate Changelog & Commit Message",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-ExecutionPolicy", "Bypass",
+                "-File", "${workspaceFolder}/scripts/New-ChangelogPrompt.ps1"
+            ],
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "clear": true,
+                "echo": false,
+                "focus": true
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
