@@ -1,94 +1,104 @@
-# ChangeLogger
+# GitHub Copilot Changelog Automation
 
-ChangeLogger is a small PowerShell utility that generates a ready-to-paste GitHub Copilot Chat prompt for staging changes and creating a commit message.
+A reusable GitHub Copilot instruction template that automates changelog updates and git commits across any repository. Type a single phrase in Copilot Chat and it handles everything automatically.
 
-The generated prompt tells Copilot to:
-
-- run `git add .`
-- inspect the staged changes
-- summarize what changed
-- suggest a conventional commit message
-- output the git commit command
+---
 
 ## What It Does
 
-The script collects lightweight repository context, including:
+When you type **commit my changes** in GitHub Copilot Chat, Copilot will:
 
-- the current branch name
-- the repository root
-- the current git status
-- the current date
+1. Stage all unstaged changes
+2. Read the git diff from the workspace
+3. Determine the correct semantic version bump
+4. Create or update `CHANGELOG.md` with a formatted entry
+5. Generate a Conventional Commits formatted commit message
+6. Commit, tag, and push to the remote repository
 
-It then builds a structured prompt that asks Copilot to:
+No scripts. No copy and paste. No manual git commands.
 
-1. run `git add .`
-2. inspect the staged diff
-3. ascertain what changed in the codebase
-4. generate a commit message using conventional commit format
+---
 
-If clipboard access is available, the prompt is also copied automatically.
+## Repository Structure
 
-## Repository Layout
+```
+repo/
+└── .github/
+    └── copilot-instructions.md
+```
 
-- `scripts/generate-changelog-prompt.ps1`: main script
-- `vscode/tasks.json`: sample VS Code task definition for running the script
+---
+
+## Setup Instructions
+
+### Step 1 — Create a GitHub Template Repository
+
+1. Go to [github.com](https://github.com) and click **+** in the top right corner
+2. Select **New repository**
+3. Name it something like `repo-template`
+4. Set visibility to **Private**
+5. Check **Add a README file**
+6. Click **Create repository**
+
+### Step 2 — Mark It as a Template
+
+1. Inside the new repo click **Settings**
+2. Scroll to the **General** section
+3. Check the box labeled **Template repository**
+4. Click **Save**
+
+### Step 3 — Add the Instruction File
+
+1. Inside the repo click **Add file** and select **Create new file**
+2. In the filename field type exactly:
+   ```
+   .github/copilot-instructions.md
+   ```
+   GitHub will automatically create the `.github` folder when you include the `/` in the name
+3. Paste the contents of `copilot-instructions.md` from this repo into the editor
+4. Click **Commit changes**
+
+### Step 4 — Use the Template for Every New Repo
+
+When creating any new repository going forward:
+
+1. Click **+** and select **New repository**
+2. At the top where it says **Repository template** select your template repo from the dropdown
+3. The `.github/copilot-instructions.md` file is automatically copied into the new repo
+
+---
+
+## How to Use It
+
+1. Make your changes in the repo
+2. Open GitHub Copilot Chat in VS Code with `Cmd+Shift+I` (Mac) or `Ctrl+Shift+I` (Windows)
+3. Type: `commit my changes`
+4. Copilot handles everything from that point forward
+
+---
+
+## Important Notes
+
+**This file is per repo, not global.**
+The `copilot-instructions.md` file only applies when that specific repo is open in VS Code. Using a GitHub template repo ensures the file is present in every new project automatically without any extra steps.
+
+**CHANGELOG.md is created automatically.**
+If `CHANGELOG.md` does not exist in the repo root, Copilot creates it with the proper Keep a Changelog header before inserting the first entry. If it already exists, existing content is never modified or removed.
+
+**Versioning starts at 0.1.0.**
+If no version tags exist in the repo, the first commit is tagged as `v0.1.0`. Every subsequent commit increments the version based on the nature of the changes:
+
+| Change type | Version bump | Example |
+|---|---|---|
+| Bug fixes, config tweaks, documentation updates | Patch | 0.1.0 to 0.1.1 |
+| New features, new files, new functionality | Minor | 0.1.0 to 0.2.0 |
+| Breaking changes, significant architectural changes | Major | 0.1.0 to 1.0.0 |
+
+---
 
 ## Requirements
 
-- Git installed and available in `PATH`
-- PowerShell 7+ recommended
-- GitHub Copilot Chat available in your editor
-
-## Usage
-
-Run the script from the repository root.
-
-On macOS or Linux:
-
-```bash
-pwsh ./scripts/generate-changelog-prompt.ps1
-```
-
-On Windows PowerShell:
-
-```powershell
-.\scripts\generate-changelog-prompt.ps1
-```
-
-The script does not stage files itself. It generates a prompt that tells Copilot to run `git add .` and inspect the staged changes.
-
-## Output
-
-The script prints a full prompt that includes:
-
-- repository context
-- staging instructions
-- change analysis instructions
-- commit message rules
-- a strict output template for Copilot to follow
-
-The prompt instructs Copilot to return three sections:
-
-- `STAGED CHANGES`
-- `COMMIT MESSAGE`
-- `GIT COMMANDS`
-
-## Recommended Workflow
-
-1. Make your code or documentation changes.
-2. Run the script.
-3. Paste the generated prompt into GitHub Copilot Chat.
-4. Let Copilot stage the changes, inspect the diff, and suggest a commit message.
-5. Review the suggested commit message before committing.
-
-## VS Code Task
-
-This repository includes [vscode/tasks.json](/Users/guypletcher/Documents/GitHub/ChangeLogger/vscode/tasks.json) with a task that runs [scripts/generate-changelog-prompt.ps1](/Users/guypletcher/Documents/GitHub/ChangeLogger/scripts/generate-changelog-prompt.ps1).
-
-The checked-in task uses `pwsh`, which is appropriate for macOS and PowerShell 7 environments. If you use a different shell setup, adjust the task command for your local environment.
-
-## Notes
-
-- The script generates a prompt only; it does not execute git commands itself.
-- The prompt is designed for an agent-capable Copilot Chat session that can run terminal commands.
-- Commit message quality still depends on the staged diff and your review.
+- Visual Studio Code
+- GitHub Copilot subscription
+- Git installed and available in your terminal
+- Repository must have a remote origin configured for the push step to succeed
