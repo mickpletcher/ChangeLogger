@@ -3,39 +3,61 @@
 ## Trigger: "commit my changes"
 
 When the user types **commit my changes**, execute all steps below autonomously and in order.
-Do not ask for confirmation. Do not pause between steps. Do not skip any step.
+Do not skip any step. Stop immediately if a safety check fails or if a git command returns an unexpected error. Some steps explicitly define acceptable nonzero command results.
 
 This instruction file is a reusable template. It is not specific to any single project.
 Drop it into any new repository and it works immediately.
 
 ---
 
-## Step 1 — Collect workspace context
+## Step 1 — Run preflight checks
 
 Run each of the following commands in the terminal and capture the output:
 
 ```bash
 git status
+git rev-parse --is-inside-work-tree
+git rev-parse --abbrev-ref HEAD
+git remote get-url origin
+git fetch --tags --quiet
+git status --porcelain
 ```
 
-If there are unstaged changes, stage everything first:
+Store the following values for use in later steps:
+
+| Variable | Source |
+|---|---|
+| `BRANCH` | Output of `git rev-parse --abbrev-ref HEAD` |
+| `REMOTE_URL` | Output of `git remote get-url origin` |
+| `WORKTREE_STATUS` | Output of `git status --porcelain` |
+| `TODAY` | Today's date in `YYYY-MM-DD` format |
+
+Stop and report the exact error if:
+- The current directory is not inside a git work tree
+- `BRANCH` is `HEAD`
+- `origin` is not configured
+- `git fetch --tags --quiet` fails
+- `WORKTREE_STATUS` contains likely secret files such as `.env`, `.pem`, `.key`, `.p12`, `.pfx`, `id_rsa`, or `id_ed25519`
+- There are unresolved merge conflicts
+
+If `WORKTREE_STATUS` is empty, stop and report: `No changes detected. Nothing to commit.`
+
+---
+
+## Step 2 — Stage and collect the diff
+
+Stage all current workspace changes:
 
 ```bash
 git add .
 ```
 
-Then capture the full staged diff:
+Then capture:
 
 ```bash
 git diff --cached
-```
-
-Also capture:
-
-```bash
-git rev-parse --abbrev-ref HEAD
-git describe --tags --abbrev=0
 git diff --cached --name-status
+git describe --tags --abbrev=0 --match "v[0-9]*" --match "[0-9]*"
 ```
 
 Store the following values for use in later steps:
@@ -43,18 +65,18 @@ Store the following values for use in later steps:
 | Variable | Source |
 |---|---|
 | `DIFF` | Output of `git diff --cached` |
-| `BRANCH` | Output of `git rev-parse --abbrev-ref HEAD` |
-| `LAST_TAG` | Output of `git describe --tags --abbrev=0` — use `0.0.0` if command fails or returns nothing |
 | `STAGED_FILES` | Output of `git diff --cached --name-status` |
-| `TODAY` | Today's date in `YYYY-MM-DD` format |
+| `LAST_TAG` | Output of `git describe --tags --abbrev=0 --match "v[0-9]*" --match "[0-9]*"` |
 
 If `DIFF` is empty after staging, stop and report: `No changes detected. Nothing to commit.`
 
+If `git describe` fails or returns nothing, set `LAST_TAG` to `0.0.0`.
+
 ---
 
-## Step 2 — Determine the next semantic version
+## Step 3 — Determine the next semantic version
 
-Using `LAST_TAG` as the current version, determine the next version based on the nature of the changes in `DIFF`:
+Normalize `LAST_TAG` by removing a leading `v` if present. Using that normalized value as the current version, determine the next version based on the nature of the changes in `DIFF`:
 
 | Change type | Bump | Example |
 |---|---|---|
@@ -65,10 +87,20 @@ Using `LAST_TAG` as the current version, determine the next version based on the
 If `LAST_TAG` is `0.0.0` or does not exist, the next version is `0.1.0`.
 
 Store this as `NEXT_VERSION`.
+Store `vNEXT_VERSION` as `NEXT_TAG`.
+
+Before continuing, verify that the new tag does not already exist:
+
+```bash
+git rev-parse -q --verify refs/tags/NEXT_TAG
+```
+
+If this command succeeds, stop and report: `Tag NEXT_TAG already exists.`
+If this command fails because the tag does not exist, continue.
 
 ---
 
-## Step 3 — Update CHANGELOG.md
+## Step 4 — Update CHANGELOG.md
 
 ### Check if CHANGELOG.md exists
 
@@ -113,7 +145,7 @@ _Branch: BRANCH_
 
 ---
 
-## Step 4 — Build the commit message
+## Step 5 — Build the commit message
 
 Analyze `DIFF` and `STAGED_FILES` and produce a commit message using exactly this format:
 
@@ -132,33 +164,44 @@ Wrap all lines at 72 characters maximum.
 - Breaking changes: append `!` after the closing parenthesis and add a `BREAKING CHANGE:` footer after the body
 
 Store the subject line as `COMMIT_SUBJECT`.
+Store the optional body as `COMMIT_BODY`.
 
 ---
 
-## Step 5 — Run the git commands
+## Step 6 — Run validation, commit, tag, and push
+
+If the repository has an obvious test, lint, or build command documented in `package.json`, `pyproject.toml`, `Cargo.toml`, `Makefile`, or the README, run the most relevant validation command before committing. If validation fails, stop and report the exact command and error.
 
 Run the following commands in the terminal in this exact order:
 
 ```bash
 git add CHANGELOG.md
+git diff --cached --check
 git commit -m "COMMIT_SUBJECT"
-git tag vNEXT_VERSION
-git push origin BRANCH --tags
+git tag NEXT_TAG
+git push origin BRANCH
+git push origin NEXT_TAG
 ```
 
-Replace `COMMIT_SUBJECT`, `NEXT_VERSION`, and `BRANCH` with the actual values from the previous steps.
+Replace `COMMIT_SUBJECT`, `NEXT_TAG`, and `BRANCH` with the actual values from the previous steps.
+
+If `COMMIT_BODY` is needed, replace the commit command above with:
+
+```bash
+git commit -m "COMMIT_SUBJECT" -m "COMMIT_BODY"
+```
 
 ---
 
-## Step 6 — Confirm completion
+## Step 7 — Confirm completion
 
 After all commands complete successfully, output a confirmation using exactly this format:
 
 ```
-✓ CHANGELOG.md updated — version NEXT_VERSION
-✓ Committed: COMMIT_SUBJECT
-✓ Tagged: vNEXT_VERSION
-✓ Pushed to BRANCH
+CHANGELOG.md updated - version NEXT_VERSION
+Committed: COMMIT_SUBJECT
+Tagged: NEXT_TAG
+Pushed: BRANCH and NEXT_TAG
 ```
 
 If any step fails, stop immediately, report the exact error message, and do not proceed to the next step.

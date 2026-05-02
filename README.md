@@ -2,22 +2,22 @@
 
 [![Use this template](https://img.shields.io/badge/Use%20this%20template-2ea44f?style=for-the-badge&logo=github)](https://github.com/mickpletcher/ChangeLogger/generate)
 
-A reusable GitHub Copilot instruction template that automates changelog updates and git commits across any repository. Type a single phrase in Copilot Chat and it handles everything automatically.
+A reusable GitHub Copilot instruction template that guides changelog updates, semantic versioning, commits, tags, and pushes across repositories. Type a single phrase in Copilot Chat to start a consistent release-style commit workflow.
 
 ---
 
 ## What It Does
 
-When you type **commit my changes** in GitHub Copilot Chat, Copilot will:
+When you type **commit my changes** in GitHub Copilot Chat, Copilot is instructed to:
 
-1. Stage all unstaged changes
-2. Read the git diff from the workspace
+1. Check the repository, branch, remote, and working tree state
+2. Stage the current workspace changes after safety checks
 3. Determine the correct semantic version bump
 4. Create or update `CHANGELOG.md` with a formatted entry
 5. Generate a Conventional Commits formatted commit message
-6. Commit, tag, and push to the remote repository
+6. Commit, tag, and push the branch plus the new tag
 
-No scripts. No copy and paste. No manual git commands.
+No scripts and no copy/paste workflow. Copilot still runs inside your editor experience, so review its terminal actions and output the same way you would review any agent-assisted git operation.
 
 ---
 
@@ -70,12 +70,74 @@ When creating any new repository going forward:
 
 ---
 
+## Add to an Existing Repo
+
+From the root of an existing repository, run:
+
+```bash
+mkdir -p .github
+curl -L https://raw.githubusercontent.com/mickpletcher/ChangeLogger/main/.github/copilot-instructions.md -o .github/copilot-instructions.md
+git add .github/copilot-instructions.md
+git commit -m "chore(copilot): add changelog automation instructions"
+```
+
+If you prefer not to use `curl`, create `.github/copilot-instructions.md` manually and paste in the instruction file from this template.
+
+---
+
 ## How to Use It
 
 1. Make your changes in the repo
 2. Open GitHub Copilot Chat in VS Code with `Cmd+Shift+I` (Mac) or `Ctrl+Shift+I` (Windows)
 3. Type: `commit my changes`
-4. Copilot handles everything from that point forward
+4. Review the completed changelog entry, commit, tag, and push result
+
+---
+
+## Verify Copilot Loaded the Instructions
+
+Ask Copilot Chat:
+
+```text
+What repository instructions are active for this workspace?
+```
+
+Copilot should reference `.github/copilot-instructions.md` or describe the changelog commit workflow. If it does not, check that:
+
+- The file is named exactly `.github/copilot-instructions.md`
+- The repository root is open in VS Code
+- GitHub Copilot Chat is enabled and signed in
+- The file was saved before opening the chat
+
+---
+
+## Example Changelog Entry
+
+After a successful run, `CHANGELOG.md` should receive a new entry near the top:
+
+```markdown
+## [0.2.1] - 2026-05-01
+_Branch: main_
+
+### Changed
+- Clarified Copilot instructions as guided workflow context
+- Hardened commit workflow with preflight checks and safer tag pushes
+```
+
+The exact version, date, branch, section, and bullets should match the repository changes Copilot committed.
+
+---
+
+## Troubleshooting
+
+| Problem | What to check |
+|---|---|
+| Copilot ignores `commit my changes` | Confirm the instruction file is saved under `.github/copilot-instructions.md` and reopen Copilot Chat. |
+| `No changes detected. Nothing to commit.` | Run `git status` and confirm there are modified, added, or deleted files in the repository. |
+| `origin` is not configured | Add a remote with `git remote add origin <repo-url>` before asking Copilot to push. |
+| Tag already exists | Fetch tags, inspect the existing tag, and choose whether the next version should be bumped again. |
+| Push is rejected | Pull or rebase the latest remote branch, resolve conflicts, then run the workflow again. |
+| Secret-file check stops the workflow | Review the flagged file and remove credentials before committing. |
 
 ---
 
@@ -84,11 +146,14 @@ When creating any new repository going forward:
 **This file is per repo, not global.**
 The `copilot-instructions.md` file only applies when that specific repo is open in VS Code. Using a GitHub template repo ensures the file is present in every new project automatically without any extra steps.
 
+**Repository instructions guide Copilot; they do not create a deterministic script.**
+GitHub Copilot includes repository custom instructions as context for supported features. The template is designed to make the requested workflow consistent, but Copilot's exact behavior may vary by client, model, repository state, and settings.
+
 **CHANGELOG.md is created automatically.**
 If `CHANGELOG.md` does not exist in the repo root, Copilot creates it with the proper Keep a Changelog header before inserting the first entry. If it already exists, existing content is never modified or removed.
 
 **Versioning starts at 0.1.0.**
-If no version tags exist in the repo, the first commit is tagged as `v0.1.0`. Every subsequent commit increments the version based on the nature of the changes:
+If no version tags exist in the repo, the first commit is tagged as `v0.1.0`. Existing tags may use either `0.1.0` or `v0.1.0`; the instruction template normalizes both forms before calculating the next version. Every subsequent commit increments the version based on the nature of the changes:
 
 | Change type | Version bump | Example |
 |---|---|---|
@@ -104,3 +169,4 @@ If no version tags exist in the repo, the first commit is tagged as `v0.1.0`. Ev
 - GitHub Copilot subscription
 - Git installed and available in your terminal
 - Repository must have a remote origin configured for the push step to succeed
+- A clean understanding of which local changes should be included before asking Copilot to commit
