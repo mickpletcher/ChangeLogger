@@ -85,6 +85,20 @@ If you prefer not to use `curl`, create `.github/copilot-instructions.md` manual
 
 ---
 
+## Workflow Templates
+
+The default template in `.github/copilot-instructions.md` balances automation with guardrails. Alternate templates are available when a repository needs a different operating style:
+
+| Template | Use when |
+|---|---|
+| `templates/cautious/copilot-instructions.md` | Every stage, commit, tag, and push should require explicit approval. |
+| `templates/interactive/copilot-instructions.md` | Copilot should ask at decision points such as version bumps or changelog wording. |
+| `templates/fully-automated/copilot-instructions.md` | The repository accepts direct automation after safety checks pass. |
+
+To use one, copy it into the target repo as `.github/copilot-instructions.md`.
+
+---
+
 ## How to Use It
 
 1. Make your changes in the repo
@@ -177,6 +191,41 @@ This policy file is optional. If it is not present, the template uses the defaul
 
 ---
 
+## Validation Command Examples
+
+Use `.github/changelog-automation.md` to make validation explicit for each project type.
+
+### Node.js
+
+```markdown
+validationCommands:
+  - npm test
+  - npm run lint
+  - npm run build
+```
+
+### Python
+
+```markdown
+validationCommands:
+  - python -m pytest
+  - python -m ruff check .
+  - python -m build
+```
+
+### .NET
+
+```markdown
+validationCommands:
+  - dotnet test
+  - dotnet format --verify-no-changes
+  - dotnet build --configuration Release
+```
+
+Keep validation commands fast enough to run during the commit workflow. Long release or deployment checks usually belong in CI.
+
+---
+
 ## Protected Branches and Pull Requests
 
 If GitHub CLI is installed and authenticated, the instruction template asks Copilot to check whether the current branch is protected before staging changes. When protection is detected, Copilot should stop before committing or pushing unless the optional policy file explicitly allows direct pushes or tells it to use a pull request workflow.
@@ -228,6 +277,26 @@ Different project types may need different rules. For example:
 | Documentation site | Treat new guides as minor and edits or typo fixes as patch. |
 
 Record those choices in `.github/changelog-automation.md` under `versionBumpRules` so Copilot has project-specific guidance.
+
+---
+
+## Release Notes Without Committing
+
+Use `prompts/release-notes.md` when you want a release notes draft without modifying files or publishing anything. Paste that prompt into Copilot Chat, then type:
+
+```text
+draft release notes
+```
+
+The companion prompt tells Copilot to inspect history and diffs, draft user-facing release notes, and avoid `git add`, `git commit`, `git tag`, and `git push`.
+
+---
+
+## Manual Fixture Testing
+
+The `fixtures/manual-test-repo` folder contains a lightweight fixture plan for testing the workflow against patch, minor, major, secret-detection, validation-failure, tag-collision, and pull-request-required scenarios.
+
+Create the fixture in a temporary directory, copy in the instruction template you want to test, then run each scenario manually through Copilot Chat.
 
 ---
 

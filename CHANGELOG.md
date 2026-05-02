@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.3.0] - 2026-05-01
+_Branch: main_
+
+### Added
+- Added alternate workflow templates for different automation styles
+- Added release notes prompt and manual workflow fixture guidance
+- Added validation examples for Node, Python, and .NET projects
+
 ## [0.2.3] - 2026-05-01
 _Branch: main_
 

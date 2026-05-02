@@ -1,0 +1,10 @@
+{
+  "name": "changelogger-fixture",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "node --check src/app.js",
+    "lint": "node --check src/app.js",
+    "build": "node --check src/app.js"
+  }
+}
