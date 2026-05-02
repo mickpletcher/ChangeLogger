@@ -141,6 +141,96 @@ The exact version, date, branch, section, and bullets should match the repositor
 
 ---
 
+## Optional Repository Policy
+
+For stricter repositories, add `.github/changelog-automation.md` alongside the Copilot instruction file. Copilot is instructed to read this file before staging, committing, tagging, or pushing.
+
+Use it to document repo-specific rules like:
+
+```markdown
+# Changelog Automation Policy
+
+protectedBranches:
+  - main
+  - release/*
+
+pullRequestsRequired: true
+allowDirectPushesToProtectedBranches: false
+
+validationCommands:
+  - npm test
+  - npm run lint
+
+versionBumpRules:
+  patch:
+    - documentation updates
+    - dependency pin changes
+  minor:
+    - new user-facing functionality
+    - new public configuration options
+  major:
+    - breaking API changes
+    - removed public behavior
+```
+
+This policy file is optional. If it is not present, the template uses the default rules in `.github/copilot-instructions.md`.
+
+---
+
+## Protected Branches and Pull Requests
+
+If GitHub CLI is installed and authenticated, the instruction template asks Copilot to check whether the current branch is protected before staging changes. When protection is detected, Copilot should stop before committing or pushing unless the optional policy file explicitly allows direct pushes or tells it to use a pull request workflow.
+
+For repositories that require pull requests:
+
+1. Work on a feature branch instead of `main`
+2. Set `pullRequestsRequired: true` in `.github/changelog-automation.md`
+3. Let Copilot create the changelog update and local commit on the feature branch
+4. Push the feature branch and open a pull request through your normal review process
+
+Avoid direct tag publication from protected or release-managed branches unless your project policy explicitly allows it.
+
+---
+
+## Secret Detection Guidance
+
+The instruction template stops if staged changes appear to include common credential files such as `.env`, `.npmrc`, `.pypirc`, `.netrc`, private keys, or service account JSON files.
+
+Also review diffs manually for inline secrets, including:
+
+- API keys and bearer tokens
+- GitHub, npm, PyPI, cloud, or deployment tokens
+- Private keys or certificate material
+- Database URLs containing usernames and passwords
+- Webhook signing secrets
+
+Secret detection is a guardrail, not a full security scanner. For sensitive repositories, pair this template with dedicated tools such as pre-commit hooks, secret scanning, and branch protection.
+
+---
+
+## Customizing Version Bump Rules
+
+The default bump rules are intentionally simple:
+
+| Change type | Version bump |
+|---|---|
+| Fixes, configuration, and documentation | Patch |
+| New files, features, or functionality | Minor |
+| Breaking changes or architectural changes | Major |
+
+Different project types may need different rules. For example:
+
+| Project type | Suggested customization |
+|---|---|
+| Library or SDK | Treat public API changes as minor and removals as major. |
+| Web app | Treat user-visible features as minor and copy-only changes as patch. |
+| Infrastructure | Treat stateful migration or deployment behavior changes as major. |
+| Documentation site | Treat new guides as minor and edits or typo fixes as patch. |
+
+Record those choices in `.github/changelog-automation.md` under `versionBumpRules` so Copilot has project-specific guidance.
+
+---
+
 ## Important Notes
 
 **This file is per repo, not global.**

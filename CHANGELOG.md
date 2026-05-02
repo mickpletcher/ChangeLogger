@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.3] - 2026-05-01
+_Branch: main_
+
+### Added
+- Added protected branch and pull request workflow guidance
+- Added policy guidance for secrets and custom version rules
+
 ## [0.2.2] - 2026-05-01
 _Branch: main_
 

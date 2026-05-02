@@ -9,10 +9,10 @@
 
 ## Tier 2 - Workflow Hardening
 
-- Add optional checks for protected branches before committing or pushing.
-- Expand secret detection guidance for common token and credential patterns.
-- Document how to customize version bump rules for different project types.
-- Add guidance for repositories that require pull requests instead of direct pushes.
+- [x] Added optional checks for protected branches before committing or pushing.
+- [x] Expanded secret detection guidance for common token and credential patterns.
+- [x] Documented how to customize version bump rules for different project types.
+- [x] Added guidance for repositories that require pull requests instead of direct pushes.
 
 ## Tier 3 - Larger Enhancements
 

@@ -19,9 +19,12 @@ git status
 git rev-parse --is-inside-work-tree
 git rev-parse --abbrev-ref HEAD
 git remote get-url origin
+git ls-files .github/changelog-automation.md
 git fetch --tags --quiet
 git status --porcelain
 ```
+
+If `.github/changelog-automation.md` exists, read it before continuing. Use it as repository-specific policy for protected branches, pull request requirements, validation commands, and version bump rules.
 
 Store the following values for use in later steps:
 
@@ -29,6 +32,7 @@ Store the following values for use in later steps:
 |---|---|
 | `BRANCH` | Output of `git rev-parse --abbrev-ref HEAD` |
 | `REMOTE_URL` | Output of `git remote get-url origin` |
+| `POLICY_FILE` | Output of `git ls-files .github/changelog-automation.md` |
 | `WORKTREE_STATUS` | Output of `git status --porcelain` |
 | `TODAY` | Today's date in `YYYY-MM-DD` format |
 
@@ -37,10 +41,21 @@ Stop and report the exact error if:
 - `BRANCH` is `HEAD`
 - `origin` is not configured
 - `git fetch --tags --quiet` fails
-- `WORKTREE_STATUS` contains likely secret files such as `.env`, `.pem`, `.key`, `.p12`, `.pfx`, `id_rsa`, or `id_ed25519`
+- `WORKTREE_STATUS` contains likely secret files such as `.env`, `.env.local`, `.env.production`, `.npmrc`, `.pypirc`, `.netrc`, `.pem`, `.key`, `.p12`, `.pfx`, `id_rsa`, `id_ed25519`, `credentials.json`, or `service-account.json`
 - There are unresolved merge conflicts
 
 If `WORKTREE_STATUS` is empty, stop and report: `No changes detected. Nothing to commit.`
+
+If GitHub CLI is installed and authenticated, optionally check whether `BRANCH` is protected before staging:
+
+```bash
+gh auth status
+gh api "repos/{owner}/{repo}/branches/BRANCH/protection" --silent
+```
+
+Replace `BRANCH` with the current branch name, URL-encoding slashes if needed.
+
+If the protection check succeeds, treat `BRANCH` as protected. Stop before committing or pushing unless `.github/changelog-automation.md` explicitly allows direct pushes to that branch. If the policy says pull requests are required and `BRANCH` is protected, stop and report that the user should switch to a feature branch before running the workflow.
 
 ---
 
@@ -76,7 +91,9 @@ If `git describe` fails or returns nothing, set `LAST_TAG` to `0.0.0`.
 
 ## Step 3 — Determine the next semantic version
 
-Normalize `LAST_TAG` by removing a leading `v` if present. Using that normalized value as the current version, determine the next version based on the nature of the changes in `DIFF`:
+Normalize `LAST_TAG` by removing a leading `v` if present. Using that normalized value as the current version, determine the next version based on the nature of the changes in `DIFF`.
+
+If `.github/changelog-automation.md` defines version bump rules, follow those repository-specific rules. Otherwise, use these defaults:
 
 | Change type | Bump | Example |
 |---|---|---|
@@ -170,7 +187,9 @@ Store the optional body as `COMMIT_BODY`.
 
 ## Step 6 — Run validation, commit, tag, and push
 
-If the repository has an obvious test, lint, or build command documented in `package.json`, `pyproject.toml`, `Cargo.toml`, `Makefile`, or the README, run the most relevant validation command before committing. If validation fails, stop and report the exact command and error.
+If `.github/changelog-automation.md` defines validation commands, run them before committing. Otherwise, if the repository has an obvious test, lint, or build command documented in `package.json`, `pyproject.toml`, `Cargo.toml`, `Makefile`, or the README, run the most relevant validation command before committing. If validation fails, stop and report the exact command and error.
+
+If the repository policy says pull requests are required, do not push directly to a protected branch. Commit only on the current feature branch, push that branch and `NEXT_TAG` only if allowed by policy, then report that a pull request is required before merging or release publication.
 
 Run the following commands in the terminal in this exact order:
 
